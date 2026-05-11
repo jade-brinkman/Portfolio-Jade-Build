@@ -11,6 +11,19 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- Ajoute une entrée <url> pour chaque page de ton site -->
+  <url>
+    <loc>https://jade-brinkman.github.io/contact.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://jade-brinkman.github.io/portfolio.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://jade-brinkman.github.io/services.html</loc>
+    <priority>0.8</priority>
+  </url>
 
 </urlset>
