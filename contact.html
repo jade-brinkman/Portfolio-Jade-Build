@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('mjz6gy8BE7v57RSuO');</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -297,12 +299,12 @@ footer ul li a:hover{color:var(--jade-xl)}
         </div>
         <div class="form-group"><label>Décrivez votre projet *</label><textarea class="form-control" id="cf-msg" rows="4" placeholder="Parlez-moi de votre activité, de vos besoins, de votre délai souhaité..."></textarea></div>
         <button class="form-submit" onclick="submitForm()"><i class="fa-solid fa-paper-plane" style="font-size:0.75rem"></i>&nbsp;Envoyer ma demande</button>
-        <p class="form-note">Votre client de messagerie s'ouvrira pour confirmer l'envoi vers jade.build.pro@gmail.com</p>
+        <p class="form-note">En cliquant sur Envoyer, votre message sera transmis directement à jade.build.pro@gmail.com</p>
       </div>
       <div class="success-msg" id="success-msg">
         <div style="font-size:2.5rem;color:var(--jade);margin-bottom:0.75rem">&#10003;</div>
-        <strong style="display:block;font-family:var(--serif);font-size:1.2rem;color:var(--ink);margin-bottom:0.4rem">Message prêt à envoyer !</strong>
-        <p style="font-size:0.85rem;color:var(--ink4)">Votre client de messagerie s'est ouvert. Envoyez le message pour finaliser.</p>
+        <strong style="display:block;font-family:var(--serif);font-size:1.2rem;color:var(--ink);margin-bottom:0.4rem">Message envoyé !</strong>
+        <p style="font-size:0.85rem;color:var(--ink4)">Votre demande a bien été transmise. Je vous réponds sous 48h.</p>
       </div>
     </div>
   </div>
@@ -344,11 +346,10 @@ footer ul li a:hover{color:var(--jade-xl)}
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Jade Build &middot; Jade Brinkman</span>
+    <span>© 2026 Jade Build · Jade Brinkman</span>
     <span>Paris, Île-de-France</span>
   </div>
 </footer>
-
 
 <button id="chat-btn" aria-label="Ouvrir le chat">
   <img src="logo.png" alt="Jade Build">
@@ -400,18 +401,15 @@ footer ul li a:hover{color:var(--jade-xl)}
   </div>
 </div>
 
-
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
 <script>
-// Custom cursor
 const cur = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
 (function loop(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
 
-// Cursor dark-bg detection
 function checkCursorBg(){
   const el=document.elementFromPoint(mx,my);
   if(!el){document.body.classList.remove('cursor-on-dark');return}
@@ -438,7 +436,6 @@ document.querySelectorAll('a,button,.card,.icon-cell,.btn,.port-card,.proj-card'
   el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-hover'));
 });
 
-// Nav scroll + hamburger
 const nav = document.getElementById('main-nav');
 const hamburger = document.getElementById('nav-hamburger');
 const mobileNav = document.getElementById('nav-mobile');
@@ -454,18 +451,15 @@ document.addEventListener('click',e=>{
   }
 });
 
-// Set active nav link
 const page = document.location.pathname.split('/').pop().replace('.html','') || 'index';
 document.querySelectorAll('[data-page]').forEach(a=>{
   if(a.dataset.page===page) a.classList.add('active');
 });
 
-// Reveal on scroll
 const revs = document.querySelectorAll('.reveal');
 const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:0.08,rootMargin:'0px 0px -30px 0px'});
 revs.forEach(r=>obs.observe(r));
 
-// Chat
 const chatBtn=document.getElementById('chat-btn');
 const chatBubble=document.getElementById('chat-bubble');
 const chatClose=document.getElementById('chat-close');
@@ -507,14 +501,24 @@ function chatSend(){
   const subject=document.getElementById('chat-subject').value;
   const msg=document.getElementById('chat-msg').value.trim();
   if(!msg)return;
-  const mailSubject=encodeURIComponent('[Jade Build] '+subject+' — '+name);
-  const mailBody=encodeURIComponent('Nom : '+name+'\nEmail : '+email+'\nSujet : '+subject+'\n\nMessage :\n'+msg);
-  window.open('mailto:jade.build.pro@gmail.com?subject='+mailSubject+'&body='+mailBody);
-  document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step5').classList.add('active');
+  const btn=document.querySelector('#step4 .chat-send');
+  btn.disabled=true;btn.textContent='Envoi...';
+  emailjs.send('service_5veayvj','template_eu5fxvb',{
+    subject:subject+' — '+name,
+    from_name:name,
+    from_email:email,
+    project_type:subject,
+    budget:'Non précisé',
+    message:msg
+  }).then(()=>{
+    document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
+    document.getElementById('step5').classList.add('active');
+  }).catch(()=>{
+    btn.disabled=false;btn.textContent='Envoyer le message →';
+    alert('Une erreur est survenue. Merci de réessayer.');
+  });
 }
 
-// Smooth anchor scroll
 document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
   const t=document.querySelector(a.getAttribute('href'));
   if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
@@ -537,11 +541,22 @@ function submitForm(){
   if(!isValidEmail(email)){emailInput.classList.add('error');emailErr.classList.add('show');return;}
   emailInput.classList.remove('error');emailErr.classList.remove('show');
   if(!msg){alert('Merci de décrire votre projet.');return;}
-  const subject=encodeURIComponent('[Jade Build] Demande de devis — '+prenom+' '+nom);
-  const body=encodeURIComponent('Nom : '+prenom+' '+nom+'\nEmail : '+email+'\nType : '+(type||'Non précisé')+'\nBudget : '+(budget||'Non précisé')+'\n\nMessage :\n'+msg);
-  window.location.href='mailto:jade.build.pro@gmail.com?subject='+subject+'&body='+body;
-  document.getElementById('contact-form-inner').style.display='none';
-  document.getElementById('success-msg').style.display='block';
+  const btn=document.querySelector('.form-submit');
+  btn.disabled=true;btn.textContent='Envoi en cours...';
+  emailjs.send('service_5veayvj','template_eu5fxvb',{
+    subject:'Demande de devis — '+prenom+' '+nom,
+    from_name:prenom+' '+nom,
+    from_email:email,
+    project_type:type||'Non précisé',
+    budget:budget||'Non précisé',
+    message:msg
+  }).then(()=>{
+    document.getElementById('contact-form-inner').style.display='none';
+    document.getElementById('success-msg').style.display='block';
+  }).catch(()=>{
+    btn.disabled=false;btn.textContent='Envoyer ma demande';
+    alert('Une erreur est survenue. Merci de réessayer ou de me contacter directement par email.');
+  });
 }
 </script>
 </body>
