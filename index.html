@@ -42,10 +42,10 @@ img{max-width:100%;height:auto}
 #cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--jade);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.12s,width 0.2s,height 0.2s,opacity 0.2s,border-color 0.2s;opacity:0.5}
 body.cursor-hover #cursor{width:20px;height:20px}
 body.cursor-hover #cursor-ring{width:52px;height:52px;opacity:0.25}
-body.cursor-on-green #cursor{background:#f5ead5}
-body.cursor-on-green #cursor-ring{border-color:#f5ead5}
-body.cursor-on-dark #cursor{background:#f5ead5}
-body.cursor-on-dark #cursor-ring{border-color:#f5ead5}
+body.cursor-on-green #cursor{background:#faf8f5}
+body.cursor-on-green #cursor-ring{border-color:#faf8f5}
+body.cursor-on-dark #cursor{background:#faf8f5}
+body.cursor-on-dark #cursor-ring{border-color:#faf8f5}
 
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 3rem;background:rgba(250,248,245,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);transition:padding 0.3s}
@@ -248,7 +248,7 @@ footer ul li a:hover{color:var(--jade-xl)}
 .cta-band::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;border:1px solid rgba(255,255,255,0.1);border-radius:50%}
 .cta-band::after{content:'';position:absolute;bottom:-80px;left:-40px;width:300px;height:300px;border:1px solid rgba(255,255,255,0.07);border-radius:50%}
 .cta-band h2{font-family:var(--serif);font-size:clamp(1.8rem,4vw,3.2rem);color:white;margin-bottom:1rem;position:relative;z-index:1}
-.cta-band h2 em{color:#f5ead5;font-style:italic}
+.cta-band h2 em{color:#faf8f5;font-style:italic}
 .cta-band p{color:rgba(255,255,255,0.75);font-weight:300;margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;position:relative;z-index:1}
 .btn-white{background:white;color:var(--jade);font-weight:600;position:relative;z-index:1}
 .btn-white:hover{background:var(--jade-2xl);transform:translateY(-2px)}
@@ -532,29 +532,34 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
 (function loop(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
 
 // Cursor bg detection
+function getRGBA(node){
+  const bg=getComputedStyle(node).backgroundColor;
+  if(!bg)return null;
+  const m=bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+  if(!m)return null;
+  const a=m[4]===undefined?1:parseFloat(m[4]);
+  if(a<0.05)return null;
+  return{r:+m[1],g:+m[2],b:+m[3]};
+}
 function checkCursorBg(){
   const el=document.elementFromPoint(mx,my);
-  if(!el){document.body.classList.remove('cursor-on-dark','cursor-on-green');return}
+  document.body.classList.remove('cursor-on-dark','cursor-on-green');
+  if(!el)return;
   let node=el;
-  while(node&&node!==document.body){
-    const bg=getComputedStyle(node).backgroundColor;
-    if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent'){
-      const m=bg.match(/rgba?\((\d+),(\d+),(\d+)/);
-      if(m){
-        const [r,g,b]=[+m[1],+m[2],+m[3]];
-        // Détection fond vert jade (3d7a54 ≈ 61,122,84)
-        const isGreen = g > r*1.3 && g > b*1.3 && g > 80 && r < 130;
-        const lum=(0.299*r+0.587*g+0.114*b)/255;
-        document.body.classList.toggle('cursor-on-green', isGreen);
-        document.body.classList.toggle('cursor-on-dark', !isGreen && lum < 0.45);
-        return;
-      }
+  while(node&&node!==document.documentElement){
+    const c=getRGBA(node);
+    if(c){
+      const{r,g,b}=c;
+      const isGreen=(g>r*1.25&&g>b*1.25&&g>70&&r<145);
+      const lum=(0.299*r+0.587*g+0.114*b)/255;
+      if(isGreen){document.body.classList.add('cursor-on-green');return;}
+      if(lum<0.4){document.body.classList.add('cursor-on-dark');return;}
+      return;
     }
     node=node.parentElement;
   }
-  document.body.classList.remove('cursor-on-dark','cursor-on-green');
 }
-setInterval(checkCursorBg,80);
+setInterval(checkCursorBg,60);
 
 document.querySelectorAll('a,button,.card,.icon-cell,.btn,.port-card,.proj-card').forEach(el=>{
   el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-hover'));
