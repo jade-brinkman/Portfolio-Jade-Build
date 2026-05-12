@@ -313,34 +313,50 @@
 
 
 <button id="chat-btn" aria-label="Ouvrir le chat">
-  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
 </button>
 <div id="chat-bubble">
   <div class="chat-header">
-    <div class="chat-avatar">JB</div>
+    <div class="chat-avatar"><img src="logo.png" alt="JB"></div>
     <div class="chat-header-text"><strong>Jade Build</strong><span>Répond généralement sous 24h</span></div>
     <button class="chat-close" id="chat-close">&#10005;</button>
   </div>
   <div class="chat-body">
-    <div class="chat-progress"><div class="chat-dot done" id="dp1"></div><div class="chat-dot" id="dp2"></div><div class="chat-dot" id="dp3"></div></div>
+    <div class="chat-progress"><div class="chat-dot done" id="dp1"></div><div class="chat-dot" id="dp2"></div><div class="chat-dot" id="dp3"></div><div class="chat-dot" id="dp4"></div></div>
     <div class="chat-step active" id="step1">
-      <div class="chat-msg">Bonjour ! Je suis Jade 👋<br>Comment vous appelez-vous ?</div>
+      <div class="chat-msg">Bonjour ! Je suis Jade.<br>Comment vous appelez-vous ?</div>
       <input class="chat-input" id="chat-name" type="text" placeholder="Votre prénom et nom">
-      <button class="chat-send" onclick="chatNext(1)">Continuer →</button>
+      <button class="chat-send" onclick="chatNext(1)">Continuer &rarr;</button>
     </div>
     <div class="chat-step" id="step2">
-      <div class="chat-msg" id="msg2">Super ! Quel est votre adresse email ?</div>
+      <div class="chat-msg" id="msg2">Quel est votre adresse email ?</div>
       <input class="chat-input" id="chat-email" type="email" placeholder="votre@email.com">
-      <button class="chat-send" onclick="chatNext(2)">Continuer →</button>
+      <div class="chat-error" id="email-error">Veuillez entrer une adresse email valide.</div>
+      <button class="chat-send" onclick="chatNext(2)">Continuer &rarr;</button>
     </div>
     <div class="chat-step" id="step3">
-      <div class="chat-msg">Parfait. Quel est l'objet de votre demande ?</div>
-      <textarea class="chat-input" id="chat-msg" placeholder="Décrivez votre projet..." rows="3" style="resize:none"></textarea>
-      <button class="chat-send" onclick="chatSend()">Envoyer le message →</button>
+      <div class="chat-msg">Quel est le sujet de votre demande ?</div>
+      <select class="chat-select" id="chat-subject">
+        <option value="">Sélectionner un sujet...</option>
+        <option value="Demande de devis">Demande de devis</option>
+        <option value="Maintenance de site">Maintenance de site</option>
+        <option value="Refonte de site">Refonte de site</option>
+        <option value="Question technique">Question technique</option>
+        <option value="Partenariat">Partenariat</option>
+        <option value="Autre">Autre</option>
+      </select>
+      <button class="chat-send" onclick="chatNext(3)" style="margin-top:0.75rem">Continuer &rarr;</button>
     </div>
     <div class="chat-step" id="step4">
+      <div class="chat-msg">Décrivez votre projet ou votre question.</div>
+      <textarea class="chat-input" id="chat-msg" placeholder="Votre message..." rows="3" style="resize:none"></textarea>
+      <button class="chat-send" onclick="chatSend()">Envoyer le message &rarr;</button>
+    </div>
+    <div class="chat-step" id="step5">
       <div class="chat-msg" style="text-align:center;padding:1.5rem 1rem">
-        <div style="font-size:2rem;margin-bottom:0.5rem">&#10003;</div>
+        <div style="font-size:2rem;margin-bottom:0.5rem;color:var(--jade)">&#10003;</div>
         <strong style="display:block;font-size:0.95rem;color:#0f0f0f;margin-bottom:0.4rem">Message envoyé !</strong>
         Je vous répondrai dans les plus brefs délais.
       </div>
@@ -378,12 +394,22 @@ const revs = document.querySelectorAll('.reveal');
 const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
 revs.forEach(r=>obs.observe(r));
 
-// Chat
+// EmailJS — chargement dynamique si pas déjà présent sur la page
+if(typeof emailjs==='undefined'){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  s.onload=()=>emailjs.init('mjz6gy8BE7v57RSuO');
+  document.head.appendChild(s);
+}
+
+// Chat bubble
 const chatBtn=document.getElementById('chat-btn');
 const chatBubble=document.getElementById('chat-bubble');
 const chatClose=document.getElementById('chat-close');
 chatBtn.addEventListener('click',()=>chatBubble.classList.toggle('open'));
 chatClose.addEventListener('click',()=>chatBubble.classList.remove('open'));
+
+function isValidEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim())}
 
 function chatNext(step){
   if(step===1){
@@ -391,10 +417,17 @@ function chatNext(step){
     if(!n)return;
     document.getElementById('msg2').textContent='Bonjour '+n.split(' ')[0]+' ! Quel est votre adresse email ?';
     document.getElementById('dp2').classList.add('done');
-  }else if(step===2){
+  } else if(step===2){
     const e=document.getElementById('chat-email').value.trim();
-    if(!e)return;
+    const errEl=document.getElementById('email-error');
+    const inputEl=document.getElementById('chat-email');
+    if(!isValidEmail(e)){inputEl.classList.add('error');errEl.classList.add('show');return;}
+    inputEl.classList.remove('error');errEl.classList.remove('show');
     document.getElementById('dp3').classList.add('done');
+  } else if(step===3){
+    const s=document.getElementById('chat-subject').value;
+    if(!s)return;
+    document.getElementById('dp4').classList.add('done');
   }
   document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
   document.getElementById('step'+(step+1)).classList.add('active');
@@ -403,16 +436,26 @@ function chatNext(step){
 function chatSend(){
   const name=document.getElementById('chat-name').value.trim();
   const email=document.getElementById('chat-email').value.trim();
+  const subject=document.getElementById('chat-subject').value;
   const msg=document.getElementById('chat-msg').value.trim();
   if(!msg)return;
-  // Build mailto link
-  const subject=encodeURIComponent('Nouveau message via Jade Build — '+name);
-  const body=encodeURIComponent('Nom : '+name+'\nEmail : '+email+'\n\nMessage :\n'+msg);
-  window.location.href='mailto:jade.build.pro@gmail.com?subject='+subject+'&body='+body;
-  document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step4').classList.add('active');
+  const btn=document.querySelector('#step4 .chat-send');
+  btn.disabled=true;btn.textContent='Envoi...';
+  emailjs.send('service_5veayvj','template_eu5fxvb',{
+    subject:subject+' — '+name,
+    from_name:name,
+    from_email:email,
+    project_type:subject,
+    budget:'Non précisé',
+    message:msg
+  }).then(()=>{
+    document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
+    document.getElementById('step5').classList.add('active');
+  }).catch(()=>{
+    btn.disabled=false;btn.textContent='Envoyer le message →';
+    alert('Une erreur est survenue. Merci de réessayer.');
+  });
 }
-
 // Smooth anchor scroll
 document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
   const t=document.querySelector(a.getAttribute('href'));
