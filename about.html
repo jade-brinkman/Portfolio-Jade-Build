@@ -209,7 +209,9 @@
 
 
 <button id="chat-btn" aria-label="Ouvrir le chat">
-  <img src="logo.png" alt="Jade Build">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
 </button>
 <div id="chat-bubble">
   <div class="chat-header">
@@ -227,7 +229,7 @@
     <div class="chat-step" id="step2">
       <div class="chat-msg" id="msg2">Quel est votre adresse email ?</div>
       <input class="chat-input" id="chat-email" type="email" placeholder="votre@email.com">
-      <div class="chat-error" id="email-error">Veuillez entrer une adresse email valide (ex&nbsp;: votre@email.com)</div>
+      <div class="chat-error" id="email-error">Veuillez entrer une adresse email valide.</div>
       <button class="chat-send" onclick="chatNext(2)">Continuer &rarr;</button>
     </div>
     <div class="chat-step" id="step3">
@@ -244,7 +246,7 @@
       <button class="chat-send" onclick="chatNext(3)" style="margin-top:0.75rem">Continuer &rarr;</button>
     </div>
     <div class="chat-step" id="step4">
-      <div class="chat-msg">Décrivez votre projet ou votre question en quelques mots.</div>
+      <div class="chat-msg">Décrivez votre projet ou votre question.</div>
       <textarea class="chat-input" id="chat-msg" placeholder="Votre message..." rows="3" style="resize:none"></textarea>
       <button class="chat-send" onclick="chatSend()">Envoyer le message &rarr;</button>
     </div>
@@ -323,7 +325,15 @@ const revs = document.querySelectorAll('.reveal');
 const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:0.08,rootMargin:'0px 0px -30px 0px'});
 revs.forEach(r=>obs.observe(r));
 
-// Chat
+// EmailJS — chargement dynamique si pas déjà présent sur la page
+if(typeof emailjs==='undefined'){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  s.onload=()=>emailjs.init('mjz6gy8BE7v57RSuO');
+  document.head.appendChild(s);
+}
+
+// Chat bubble
 const chatBtn=document.getElementById('chat-btn');
 const chatBubble=document.getElementById('chat-bubble');
 const chatClose=document.getElementById('chat-close');
@@ -342,13 +352,8 @@ function chatNext(step){
     const e=document.getElementById('chat-email').value.trim();
     const errEl=document.getElementById('email-error');
     const inputEl=document.getElementById('chat-email');
-    if(!isValidEmail(e)){
-      inputEl.classList.add('error');
-      errEl.classList.add('show');
-      return;
-    }
-    inputEl.classList.remove('error');
-    errEl.classList.remove('show');
+    if(!isValidEmail(e)){inputEl.classList.add('error');errEl.classList.add('show');return;}
+    inputEl.classList.remove('error');errEl.classList.remove('show');
     document.getElementById('dp3').classList.add('done');
   } else if(step===3){
     const s=document.getElementById('chat-subject').value;
@@ -365,13 +370,23 @@ function chatSend(){
   const subject=document.getElementById('chat-subject').value;
   const msg=document.getElementById('chat-msg').value.trim();
   if(!msg)return;
-  const mailSubject=encodeURIComponent('[Jade Build] '+subject+' — '+name);
-  const mailBody=encodeURIComponent('Nom : '+name+'\nEmail : '+email+'\nSujet : '+subject+'\n\nMessage :\n'+msg);
-  window.open('mailto:jade.build.pro@gmail.com?subject='+mailSubject+'&body='+mailBody);
-  document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step5').classList.add('active');
+  const btn=document.querySelector('#step4 .chat-send');
+  btn.disabled=true;btn.textContent='Envoi...';
+  emailjs.send('service_5veayvj','template_eu5fxvb',{
+    subject:subject+' — '+name,
+    from_name:name,
+    from_email:email,
+    project_type:subject,
+    budget:'Non précisé',
+    message:msg
+  }).then(()=>{
+    document.querySelectorAll('.chat-step').forEach(s=>s.classList.remove('active'));
+    document.getElementById('step5').classList.add('active');
+  }).catch(()=>{
+    btn.disabled=false;btn.textContent='Envoyer le message →';
+    alert('Une erreur est survenue. Merci de réessayer.');
+  });
 }
-
 // Smooth anchor scroll
 document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
   const t=document.querySelector(a.getAttribute('href'));
