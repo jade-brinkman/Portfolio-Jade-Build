@@ -72,6 +72,14 @@
     <li><a href="about.html" data-page="about">À propos</a></li>
     <li><a href="contact.html" class="nav-cta" data-page="contact">Me contacter</a></li>
   </ul>
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+</nav>
+<nav class="nav-mobile" id="nav-mobile">
+  <a href="index.html" data-page="index">Accueil</a>
+  <a href="services.html" data-page="services">Services</a>
+  <a href="portfolio.html" data-page="portfolio">Portfolio</a>
+  <a href="about.html" data-page="about">À propos</a>
+  <a href="contact.html" class="nav-cta" data-page="contact">Me contacter</a>
 </nav>
 
 <main>
@@ -243,7 +251,11 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Jade Build · Jade Brinkman</span>
+    <span>© 2026 Jade Build &middot; Jade Brinkman</span>
+    <div class="ae-badge">
+      <span class="ae-dot"></span>
+      <span class="ae-text">Auto-entrepreneuse enregistrée &middot; SIREN&nbsp;103&nbsp;998&nbsp;886 &middot; SIRET&nbsp;103&nbsp;998&nbsp;886&nbsp;00016</span>
+    </div>
     <span>Paris, Île-de-France</span>
   </div>
 </footer>
@@ -319,6 +331,21 @@ document.querySelectorAll('a,button,.card,.icon-cell,.btn').forEach(el=>{
 // Nav scroll
 const nav = document.getElementById('main-nav');
 window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>40));
+// Nav hamburger
+const hamburger = document.getElementById('nav-hamburger');
+const mobileNav = document.getElementById('nav-mobile');
+if(hamburger){
+  hamburger.addEventListener('click',()=>{
+    const open=mobileNav.classList.toggle('open');
+    hamburger.querySelector('i').className=open?'fa-solid fa-xmark':'fa-solid fa-bars';
+  });
+  document.addEventListener('click',e=>{
+    if(!nav.contains(e.target)&&!mobileNav.contains(e.target)){
+      mobileNav.classList.remove('open');
+      hamburger.querySelector('i').className='fa-solid fa-bars';
+    }
+  });
+}
 
 // Set active nav link
 const page = document.location.pathname.split('/').pop().replace('.html','') || 'index';
